@@ -13,13 +13,16 @@ fun Context.fetchAllContacts(): List<Contact> {
     ).use { cursor ->
         if (cursor == null) return emptyList()
         val contacts = ArrayList<Contact>()
+        val nameColumn = cursor.getColumnIndexOrThrow(
+            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+        )
+        val phoneNumberColumn = cursor.getColumnIndexOrThrow(
+            ContactsContract.CommonDataKinds.Phone.NUMBER,
+        )
+
         while (cursor.moveToNext()) {
-            val name = cursor.getString(
-                cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME),
-            ) ?: "N/A"
-            val phoneNumber = cursor.getString(
-                cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER),
-            ) ?: "N/A"
+            val name = cursor.getString(nameColumn) ?: "N/A"
+            val phoneNumber = cursor.getString(phoneNumberColumn) ?: "N/A"
             contacts.add(Contact(name, phoneNumber))
         }
         return contacts

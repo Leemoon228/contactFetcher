@@ -19,115 +19,50 @@ import androidx.core.content.ContextCompat
 import com.github.leemoon228.contactFetcher.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
-    private var contactsUiState by mutableStateOf<ContactsUiState>(ContactsUiState.PermissionRequired)
-    private var hasRequestedPermission by mutableStateOf(false)
+    private var hasContactsPermission by mutableStateOf(false)
 
     private val requestContactsPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            hasRequestedPermission = true
-            if (granted) {
-                loadContacts()
-            } else {
-                contactsUiState = ContactsUiState.PermissionRequired
-            }
+            hasContactsPermission = granted
         }
 
-    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        (lastCustomNonConfigurationInstance as? ContactsUiState.Loaded)?.let {
-            contactsUiState = it
-        }
-        hasRequestedPermission =
-            savedInstanceState?.getBoolean(REQUESTED_PERMISSION_KEY) ?: false
+        hasContactsPermission = checkContactsPermission()
         enableEdgeToEdge()
 
         setContent {
             MyApplicationTheme {
-                val canRequestPermission = !hasRequestedPermission ||
-                    shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)
-
                 App(
-                    state = contactsUiState,
-                    canRequestPermission = canRequestPermission,
-                    onPermissionAction = {
-                        if (canRequestPermission) {
-                            hasRequestedPermission = true
-                            requestContactsPermission.launch(Manifest.permission.READ_CONTACTS)
-                        } else {
-                            openAppSettings()
-                        }
+                    hasContactsPermission = hasContactsPermission,
+                    onRequestPermission = {
+                        requestContactsPermission.launch(Manifest.permission.READ_CONTACTS)
                     },
-                    onRetry = ::loadContacts,
                     onDial = ::openDialer,
                 )
             }
         }
 
-        if (hasContactsPermission()) {
-            if (contactsUiState !is ContactsUiState.Loaded) {
-                loadContacts()
-            }
-        } else if (!hasRequestedPermission) {
-            hasRequestedPermission = true
+        if (!hasContactsPermission) {
             requestContactsPermission.launch(Manifest.permission.READ_CONTACTS)
         }
     }
 
-    @Suppress("OVERRIDE_DEPRECATION")
-    override fun onRetainCustomNonConfigurationInstance(): Any? =
-        contactsUiState.takeIf { it is ContactsUiState.Loaded }
-
     override fun onResume() {
         super.onResume()
-        if (!hasContactsPermission()) {
-            contactsUiState = ContactsUiState.PermissionRequired
-        } else if (contactsUiState == ContactsUiState.PermissionRequired) {
-            loadContacts()
-        }
+        hasContactsPermission = checkContactsPermission()
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putBoolean(REQUESTED_PERMISSION_KEY, hasRequestedPermission)
-        super.onSaveInstanceState(outState)
-    }
-
-    private fun hasContactsPermission(): Boolean =
+    private fun checkContactsPermission(): Boolean =
         ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.READ_CONTACTS,
         ) == PackageManager.PERMISSION_GRANTED
 
-    private fun loadContacts() {
-        if (!hasContactsPermission()) {
-            contactsUiState = ContactsUiState.PermissionRequired
-            return
-        }
-
-        try {
-            val contacts = fetchAllContacts()
-            contactsUiState = ContactsUiState.Loaded(contacts)
-            Toast.makeText(
-                this,
-                resources.getQuantityString(R.plurals.contacts_found, contacts.size, contacts.size),
-                Toast.LENGTH_SHORT,
-            ).show()
-        } catch (exception: SecurityException) {
-            Log.w(TAG, "Contacts permission was revoked while loading contacts", exception)
-            contactsUiState = ContactsUiState.PermissionRequired
-        } catch (exception: RuntimeException) {
-            Log.e(TAG, "Unable to load contacts", exception)
-            contactsUiState = ContactsUiState.Error
-        }
-    }
-
     private fun openDialer(phoneNumber: String) {
         try {
             startActivity(
-                Intent(
-                    Intent.ACTION_DIAL,
-                    Uri.fromParts("tel", phoneNumber, null),
-                ),
+                Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", phoneNumber, null)),
             )
         } catch (exception: ActivityNotFoundException) {
             Log.w(TAG, "No dialer app is available", exception)
@@ -135,17 +70,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun openAppSettings() {
-        startActivity(
-            Intent(
-                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.fromParts("package", packageName, null),
-            ),
-        )
-    }
-
     private companion object {
-        const val REQUESTED_PERMISSION_KEY = "requested_contacts_permission"
         const val TAG = "ContactsActivity"
     }
 }
