@@ -29,7 +29,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -94,7 +97,11 @@ fun App(
         }
     }
 
-    Scaffold(modifier = modifier.fillMaxSize()) { contentPadding ->
+    Scaffold(
+        modifier = modifier.semantics {
+            testTagsAsResourceId = true
+        },
+    ) { contentPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -180,6 +187,7 @@ private fun ContactRow(contact: Contact, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
+            .testTag("contact")
             .padding(horizontal = 20.dp, vertical = 14.dp),
     ) {
         Text(text = contact.name, style = MaterialTheme.typography.titleMedium)
