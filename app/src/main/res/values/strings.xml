@@ -5,7 +5,7 @@
     <string name="contacts_permission_action">Разрешить доступ</string>
     <string name="open_app_settings">Открыть настройки приложения</string>
     <string name="contacts_load_error">Не удалось загрузить контакты. Попробуйте ещё раз.</string>
-    <string name="contacts_empty">Контакты с номерами телефонов не найдены.</string>
+    <string name="contacts_empty">No contacts found</string>
     <string name="contacts_loading">Загрузка контактов…</string>
     <string name="retry">Повторить</string>
     <string name="dialer_unavailable">На устройстве не найдено приложение для звонков.</string>
