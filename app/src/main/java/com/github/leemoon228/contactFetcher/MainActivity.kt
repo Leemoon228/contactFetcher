@@ -32,8 +32,12 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        (lastCustomNonConfigurationInstance as? ContactsUiState.Loaded)?.let {
+            contactsUiState = it
+        }
         hasRequestedPermission =
             savedInstanceState?.getBoolean(REQUESTED_PERMISSION_KEY) ?: false
         enableEdgeToEdge()
@@ -61,9 +65,18 @@ class MainActivity : ComponentActivity() {
         }
 
         if (hasContactsPermission()) {
-            loadContacts()
+            if (contactsUiState !is ContactsUiState.Loaded) {
+                loadContacts()
+            }
+        } else if (!hasRequestedPermission) {
+            hasRequestedPermission = true
+            requestContactsPermission.launch(Manifest.permission.READ_CONTACTS)
         }
     }
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onRetainCustomNonConfigurationInstance(): Any? =
+        contactsUiState.takeIf { it is ContactsUiState.Loaded }
 
     override fun onResume() {
         super.onResume()
