@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,8 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -97,65 +94,57 @@ fun App(
         }
     }
 
-    Scaffold(
-        modifier = modifier.semantics {
-            testTagsAsResourceId = true
-        },
-    ) { contentPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding),
-        ) {
-            Text(
-                text = stringResource(R.string.contacts_title),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+    Column(
+        modifier = modifier.fillMaxSize(),
+    ) {
+        Text(
+            text = stringResource(R.string.contacts_title),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+        )
+
+        when {
+            !hasContactsPermission -> MessageContent(
+                message = stringResource(R.string.contacts_permission_message),
+                actionLabel = stringResource(R.string.contacts_permission_action),
+                onAction = onRequestPermission,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
             )
 
-            when {
-                !hasContactsPermission -> MessageContent(
-                    message = stringResource(R.string.contacts_permission_message),
-                    actionLabel = stringResource(R.string.contacts_permission_action),
-                    onAction = onRequestPermission,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+            loadFailed -> MessageContent(
+                message = stringResource(R.string.contacts_load_error),
+                actionLabel = stringResource(R.string.retry),
+                onAction = { loadFailed = false },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            )
+
+            contacts.isNullOrEmpty() -> Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    if (contacts == null) {
+                        stringResource(R.string.contacts_loading)
+                    } else {
+                        stringResource(R.string.contacts_empty)
+                    },
                 )
+            }
 
-                loadFailed -> MessageContent(
-                    message = stringResource(R.string.contacts_load_error),
-                    actionLabel = stringResource(R.string.retry),
-                    onAction = { loadFailed = false },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                )
-
-                contacts.isNullOrEmpty() -> Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        if (contacts == null) {
-                            stringResource(R.string.contacts_loading)
-                        } else {
-                            stringResource(R.string.contacts_empty)
-                        },
-                    )
-                }
-
-                else -> LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                ) {
-                    items(items = contacts) { contact ->
-                        ContactRow(contact = contact, onClick = { onDial(contact.phoneNumber) })
-                    }
+            else -> LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentPadding = PaddingValues(vertical = 8.dp),
+            ) {
+                items(items = contacts) { contact ->
+                    ContactRow(contact = contact, onClick = { onDial(contact.phoneNumber) })
                 }
             }
         }

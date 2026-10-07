@@ -12,10 +12,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import com.github.leemoon228.contactFetcher.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
@@ -33,13 +39,22 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyApplicationTheme {
-                App(
-                    hasContactsPermission = hasContactsPermission,
-                    onRequestPermission = {
-                        requestContactsPermission.launch(Manifest.permission.READ_CONTACTS)
-                    },
-                    onDial = ::openDialer,
-                )
+                Scaffold(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .semantics {
+                            testTagsAsResourceId = true
+                        },
+                ) { innerPadding ->
+                    App(
+                        hasContactsPermission = hasContactsPermission,
+                        onRequestPermission = {
+                            requestContactsPermission.launch(Manifest.permission.READ_CONTACTS)
+                        },
+                        onDial = ::openDialer,
+                        modifier = Modifier.padding(innerPadding),
+                    )
+                }
             }
         }
 
